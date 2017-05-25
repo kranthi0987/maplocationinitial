@@ -7,26 +7,25 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
-import static com.sanjay.map.AppConfig.TAG;
-
 /**
  * Created by krant on 5/25/2017.
  */
 
 public class AppController extends Application {
 
-    private RequestQueue mRequestQueue;
+    public static final String TAG = AppController.class.getSimpleName();
     private static AppController mInstance;
+    private RequestQueue mRequestQueue;
+
+    public static synchronized AppController getInstance() {
+        return mInstance;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
         mInstance = this;
 
-    }
-
-    public static synchronized AppController getInstance() {
-        return mInstance;
     }
 
     public RequestQueue getRequestQueue() {
