@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity
     private final LatLng mDefaultLocation = new LatLng(-33.8523341, 151.2106085);
     // Used for selecting the current place.
     private final int mMaxEntries = 5;
+    // Used for selecting the current place.
     boolean islogin = true;
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
@@ -146,7 +147,6 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Sets up the options menu.
-     *
      * @param menu The options menu.
      * @return Boolean.
      */
@@ -158,7 +158,6 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Handles a click on the menu option to get a place.
-     *
      * @param item The menu item to handle.
      * @return Boolean.
      */
@@ -406,5 +405,4 @@ public class MainActivity extends AppCompatActivity
             mLastKnownLocation = null;
         }
     }
-
 }
