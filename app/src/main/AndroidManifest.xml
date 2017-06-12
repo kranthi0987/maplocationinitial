@@ -57,6 +57,9 @@
             <!-- android:label="@string/app_name"> -->
 
         </activity>
+        <activity android:name=".LoginActivity"></activity>
+        <activity android:name=".savepoint"></activity>
+        <activity android:name=".SignupActivity"></activity>
     </application>
 
 </manifest>
