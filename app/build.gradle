@@ -36,4 +36,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'org.jetbrains:annotations-java5:15.0'
     compile files('libs/volley.jar')
+    compile 'com.jakewharton:butterknife:7.0.1'
 }

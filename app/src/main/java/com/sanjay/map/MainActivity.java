@@ -1,21 +1,32 @@
 package com.sanjay.map;
 
+import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -36,37 +47,49 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import static android.R.attr.button;
+import static com.google.android.gms.R.id.toolbar;
+
 public class MainActivity extends AppCompatActivity
         implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int DEFAULT_ZOOM = 15;
-    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-    // Keys for storing activity state.
-    private static final String KEY_CAMERA_POSITION = "camera_position";
-    private static final String KEY_LOCATION = "location";
+    private GoogleMap mMap;
+    private CameraPosition mCameraPosition;
+
+    // The entry point to Google Play services, used by the Places API and Fused Location Provider.
+    private GoogleApiClient mGoogleApiClient;
+
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private final LatLng mDefaultLocation = new LatLng(-33.8523341, 151.2106085);
-    // Used for selecting the current place.
-    private final int mMaxEntries = 5;
-    // Used for selecting the current place.
-    boolean islogin = true;
-    private GoogleMap mMap;
-    private CameraPosition mCameraPosition;
-    // The entry point to Google Play services, used by the Places API and Fused Location Provider.
-    private GoogleApiClient mGoogleApiClient;
+    private static final int DEFAULT_ZOOM = 15;
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
+
     // The geographical location where the device is currently located. That is, the last-known
     // location retrieved by the Fused Location Provider.
     private Location mLastKnownLocation;
+
+    // Keys for storing activity state.
+    private static final String KEY_CAMERA_POSITION = "camera_position";
+    private static final String KEY_LOCATION = "location";
+
+    // Used for selecting the current place.
+    private final int mMaxEntries = 5;
     private String[] mLikelyPlaceNames = new String[mMaxEntries];
     private String[] mLikelyPlaceAddresses = new String[mMaxEntries];
     private String[] mLikelyPlaceAttributions = new String[mMaxEntries];
     private LatLng[] mLikelyPlaceLatLngs = new LatLng[mMaxEntries];
-
+//fab
+final Context context = this;
+    private FloatingActionButton button;
+    DrawerLayout drawerLayout;
+    Toolbar toolbar;
+    //
+    boolean islogin=true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +103,7 @@ public class MainActivity extends AppCompatActivity
         // Retrieve the content view that renders the map.
         setContentView(R.layout.activity_main);
 
+
         // Build the Play services client for use by the Fused Location Provider and the Places API.
         // Use the addApi() method to request the Google Places API and the Fused Location Provider.
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -91,7 +115,48 @@ public class MainActivity extends AppCompatActivity
                 .addApi(Places.PLACE_DETECTION_API)
                 .build();
         mGoogleApiClient.connect();
+    //
+        button = (FloatingActionButton) findViewById(R.id.fab);
 
+        // add button listener
+        button.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+
+                // custom dialog
+                final Dialog dialog = new Dialog(context);
+                dialog.setContentView(R.layout.popup_window);
+                dialog.setTitle("Title...");
+
+                // set the custom dialog components - text, image and button
+//                TextView text = (TextView) dialog.findViewById(R.id.tv);
+//                text.setText("Android custom dialog example!");
+                ImageView image = (ImageButton) dialog.findViewById(R.id.image);
+                // if button is clicked, close the custom dialog
+                image.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent(MainActivity.this, savepoint.class);
+                        startActivity(i);
+                    }
+                });
+//                image.setImageResource(R.drawable.ic_launcher);
+
+                ImageButton dialogButton = (ImageButton) dialog.findViewById(R.id.ib_close);
+                // if button is clicked, close the custom dialog
+                dialogButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss();
+                    }
+                });
+
+                dialog.show();
+            }
+        });
+
+        //
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
         if (islogin) {
@@ -101,7 +166,43 @@ public class MainActivity extends AppCompatActivity
             navigationView.getMenu().clear();
             navigationView.inflateMenu(R.menu.navigation_with_logout);
         }
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.setDrawerListener(toggle);
+        toggle.syncState();
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener((NavigationView.OnNavigationItemSelectedListener) this);
     }
+    //navigation intents
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+
+    public boolean onNavigationItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        //to prevent current item select over and over
+        if (item.isChecked()){
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return false;
+        }
+
+        if (id == R.id.nav_camera) {
+            // Handle the camera action
+            startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+        }
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+    //
+
 
     /**
      * Saves the state of the map when the activity is paused.
@@ -163,7 +264,7 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
+        if (item.getItemId() == R.id.option_get_place) {
             showCurrentPlace();
         }
         return true;
@@ -179,7 +280,29 @@ public class MainActivity extends AppCompatActivity
 
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
-        // Add a marker in Sydney and move the camera
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+            @Override
+            // Return null here, so that getInfoContents() is called next.
+            public View getInfoWindow(Marker arg0) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                // Inflate the layouts for the info window, title and snippet.
+                View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents,
+                        (FrameLayout)findViewById(R.id.map), false);
+
+                TextView title = ((TextView) infoWindow.findViewById(R.id.title));
+                title.setText(marker.getTitle());
+
+                TextView snippet = ((TextView) infoWindow.findViewById(R.id.snippet));
+                snippet.setText(marker.getSnippet());
+
+                return infoWindow;
+            }
+        });
         try {
             // Customise the styling of the base map using a JSON object defined
             // in a raw resource file.
@@ -193,29 +316,6 @@ public class MainActivity extends AppCompatActivity
         } catch (Resources.NotFoundException e) {
             Log.e("", "Can't find style. Error: ", e);
         }
-        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-
-            @Override
-            // Return null here, so that getInfoContents() is called next.
-            public View getInfoWindow(Marker arg0) {
-                return null;
-            }
-
-            @Override
-            public View getInfoContents(Marker marker) {
-                // Inflate the layouts for the info window, title and snippet.
-                View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents,
-                        (FrameLayout) findViewById(R.id.map), false);
-
-                TextView title = ((TextView) infoWindow.findViewById(R.id.title));
-                title.setText(marker.getTitle());
-
-                TextView snippet = ((TextView) infoWindow.findViewById(R.id.snippet));
-                snippet.setText(marker.getSnippet());
-
-                return infoWindow;
-            }
-        });
 
         // Turn on the My Location layer and the related control on the map.
         updateLocationUI();
